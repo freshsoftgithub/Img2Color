@@ -1,17 +1,12 @@
 package com.example.myapplication;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.app.AppCompatDelegate;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.StrictMode;
-import android.provider.ContactsContract;
-import android.provider.MediaStore;
-import android.util.Base64;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -20,96 +15,97 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
-import com.android.volley.AuthFailureError;
 import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.NetworkResponse;
 import com.android.volley.Request;
-import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
-import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.ImageLoader;
 import com.android.volley.toolbox.Volley;
-import com.example.myapplication4.api.VolleyMultipartRequest;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
+import java.sql.Time;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Timer;
 
-public class MainActivity extends AppCompatActivity {
+public class FourthActivity extends AppCompatActivity {
 
-    ProgressBar progressBar;
-    ImageView imageView;
-    final int Pick_image = 1;
-    final int Catch_image = 0;
+    ImageView image_paint;
+    ImageView image_pencil;
     Button send;
-    Button btnCamera;
-    Button btnPick_Img;
-    Bitmap imageData;
-    Timer timer;
+    Button back;
+    EditText mail;
+    ProgressBar progressBar;
     int count;
+    Timer timer;
+    static Bitmap image;
+    static String paint;
+    static String pencil;
 
+    public static String getUrlPaint(String url){
+        paint = url;
+        return paint;
+    }
+
+    public static String getUrlPencil(String url){
+        pencil= url;
+        return pencil;
+    }
+
+    public static Bitmap getImageData(Bitmap imageData){
+        image = imageData;
+        return image;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.fourthactivity);
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
+
+        image_paint = findViewById(R.id.ViewImage_paint);
+        image_pencil= findViewById(R.id.ViewImage_pencil);
+
+        Bitmap bit_paint = getBitmapFromURL(paint);
+        image_paint.setImageBitmap(bit_paint);
+
+        Bitmap bit_pencil = getBitmapFromURL(pencil);
+        image_pencil.setImageBitmap(bit_pencil);
+
+        back = findViewById(R.id.btnBack);
+        send = findViewById(R.id.SendOnEmail);
+
+        mail = findViewById(R.id.Email);
 
         progressBar = findViewById(R.id.progbar);
         progressBar.setVisibility(View.INVISIBLE);
 
-        imageView = findViewById(R.id.ViewImage);
-
-        btnCamera = findViewById(R.id.btnCamera);
-        btnPick_Img = findViewById(R.id.btnPickImg);
-
-        send = findViewById(R.id.btnSend);
-        send.setVisibility(View.INVISIBLE);
-
-
-
-        btnPick_Img.setOnClickListener(new View.OnClickListener() {
+        back.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                send.setEnabled(true);
-                Intent photo = new Intent(Intent.ACTION_PICK);
-                photo.setType("image/*");
-                startActivityForResult(photo,Pick_image);
+                Intent back = new Intent(FourthActivity.this,SecondActivity.class);
+                startActivity(back);
             }
         });
-        btnCamera.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                send.setEnabled(true);
-                Intent camera = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                startActivityForResult(camera,Catch_image);
-            }
-        });
+
         send.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                uploadImage(imageData,null);
-                FourthActivity.getImageData(imageData);
+                uploadImage(image,mail.getText().toString());
 
+                back.setEnabled(false);
+                mail.setEnabled(false);
                 send.setEnabled(false);
-                btnCamera.setEnabled(false);
-                btnPick_Img.setEnabled(false);
 
-                Toast message = Toast.makeText(MainActivity.this,"Происходит чудо, пожалуйста подождите.",Toast.LENGTH_LONG);
+                Toast message = Toast.makeText(FourthActivity.this,"Идет отправка изображения на почту, пожалуйста подождите.",Toast.LENGTH_LONG);
                 message.show();
 
                 progressBar.setVisibility(View.VISIBLE);
@@ -119,43 +115,26 @@ public class MainActivity extends AppCompatActivity {
                         progressBar.setProgress(count);
                     }
                 };
-
             }
         });
+
     }
 
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-
-        switch (requestCode){
-            case Pick_image:
-                if(resultCode == RESULT_OK){
-                    try {
-                        final Uri imageUri = data.getData();
-                        final InputStream imageStream = getContentResolver().openInputStream(imageUri);
-                        final Bitmap selectedimage = BitmapFactory.decodeStream(imageStream);
-                        imageView.setImageBitmap(selectedimage);
-                        imageData = selectedimage;
-                        send.setVisibility(View.VISIBLE);
-                    }
-                    catch (FileNotFoundException e) {
-                        e.printStackTrace();
-                    }
-
-                }
-            case Catch_image:{
-                if(resultCode == RESULT_OK) {
-                    try {
-                        Bitmap bitmap = (Bitmap) data.getExtras().get("data");
-                        imageData = bitmap;
-                        imageView.setImageBitmap(bitmap);
-                        send.setVisibility(View.VISIBLE);
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
+    private static Bitmap getBitmapFromURL(String src) {
+        try {
+            Log.e("src", src);
+            URL url = new URL(src);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setDoInput(true);
+            connection.connect();
+            InputStream input = connection.getInputStream();
+            Bitmap myBitmap = BitmapFactory.decodeStream(input);
+            Log.e("Bitmap", "returned");
+            return myBitmap;
+        } catch (IOException e) {
+            e.printStackTrace();
+            Log.e("Exception", e.getMessage());
+            return null;
         }
     }
 
@@ -168,7 +147,7 @@ public class MainActivity extends AppCompatActivity {
     private void uploadImage(final Bitmap image, String email) {
         String url = "http://10.0.2.2:8000/upload"; //ссылка на сервер
 
-        VolleyMultipartRequest volleyMultipartRequest = new VolleyMultipartRequest(Request.Method.POST, url,
+        com.example.myapplication4.api.VolleyMultipartRequest volleyMultipartRequest = new com.example.myapplication4.api.VolleyMultipartRequest(Request.Method.POST, url,
                 new Response.Listener<NetworkResponse>() {
                     @Override
                     public void onResponse(NetworkResponse response) {
@@ -180,17 +159,16 @@ public class MainActivity extends AppCompatActivity {
                             //Ссылка pencil
                             String pencil = obj.getJSONObject("image_pencil").getString("first");
 
-                            //Отправка изображений на другие экраны
-                            SecondActivity.GetURLPaint(paint);
-                            ThirdActivity.GetURLPencil(pencil);
-                            FourthActivity.getUrlPaint(paint);
-                            FourthActivity.getUrlPencil(pencil);
-
                             timer.cancel();
+                            progressBar.setVisibility(View.INVISIBLE);
 
-                            //Открыть второй экран
-                            Intent second = new Intent(MainActivity.this,SecondActivity.class);
-                            MainActivity.this.startActivity(second);
+                            back.setEnabled(true);
+                            mail.setEnabled(true);
+                            send.setEnabled(true);
+
+                            Toast message = Toast.makeText(FourthActivity.this,"Изображения отправлены на почту",Toast.LENGTH_LONG);
+                            message.show();
+
 
                         } catch (JSONException e) {
                             e.printStackTrace();
@@ -232,6 +210,3 @@ public class MainActivity extends AppCompatActivity {
 
     }
 }
-
-
-

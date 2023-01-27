@@ -48,6 +48,7 @@ public class ThirdActivity extends AppCompatActivity {
     Button Paint;
     Button back;
     Button send;
+    Button mail;
 
     public static String GetURLPencil(String image_pencil){
         pencil = image_pencil;
@@ -68,6 +69,7 @@ public class ThirdActivity extends AppCompatActivity {
         back = findViewById(R.id.btnBack);
         Paint = findViewById(R.id.btnPaintShow);
         send = findViewById(R.id.btnGetPictures);
+        mail = findViewById(R.id.btnEmail);
 
         Paint.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -89,6 +91,14 @@ public class ThirdActivity extends AppCompatActivity {
                 dowbloadImageOnDevice(bit_pencil);
                 Toast message = Toast.makeText(ThirdActivity.this,"Изображение скачено.",Toast.LENGTH_LONG);
                 message.show();
+            }
+        });
+
+        mail.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent send = new Intent(ThirdActivity.this,FourthActivity.class);
+                startActivity(send);
             }
         });
     }

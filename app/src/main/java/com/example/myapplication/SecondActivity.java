@@ -49,6 +49,7 @@ public class SecondActivity extends AppCompatActivity {
     Button Pencil;
     Button back;
     Button send;
+    Button mail;
 
 
     public static String GetURLPaint(String image_paint){
@@ -67,6 +68,7 @@ public class SecondActivity extends AppCompatActivity {
         back = findViewById(R.id.btnBack);
         Pencil = findViewById(R.id.btnPencilShow);
         send = findViewById(R.id.btnGetPictures);
+        mail = findViewById(R.id.btnEmail);
 
         Bitmap bit_paint = getBitmapFromURL(paint);
         image_paint.setImageBitmap(bit_paint);
@@ -94,6 +96,15 @@ public class SecondActivity extends AppCompatActivity {
 
                 Toast message = Toast.makeText(SecondActivity.this,"Изображение скачено.",Toast.LENGTH_LONG);
                 message.show();
+            }
+        });
+
+        mail.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+
+                Intent send = new Intent(SecondActivity.this,FourthActivity.class);
+                startActivity(send);
             }
         });
 

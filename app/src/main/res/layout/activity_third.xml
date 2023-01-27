@@ -15,6 +15,15 @@
         android:layout_gravity="center"
         android:layout_weight="1" />
 
+    <Button
+        android:id="@+id/btnEmail"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="20dp"
+        android:backgroundTint="@color/green_200"
+        android:text="Получить изображения на почту"
+        android:textColor="@color/black"/>
 
     <Button
         android:id="@+id/btnGetPictures"
