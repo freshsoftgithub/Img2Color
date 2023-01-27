@@ -102,8 +102,6 @@ public class MainActivity extends AppCompatActivity {
         send.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                ;
-
                 uploadImage(imageData,null);
 
                 send.setEnabled(false);
@@ -167,7 +165,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void uploadImage(final Bitmap image, String email) {
-        String url = "http://10.0.2.2:8000/upload"; //урл, куда пост-запрос отправляется
+        String url = "http://10.0.2.2:8000/upload"; //ссылка на сервер
 
         VolleyMultipartRequest volleyMultipartRequest = new VolleyMultipartRequest(Request.Method.POST, url,
                 new Response.Listener<NetworkResponse>() {
