@@ -69,16 +69,15 @@ public class MainActivity extends AppCompatActivity {
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
 
-        progressBar = (ProgressBar)findViewById(R.id.progbar);
+        progressBar = findViewById(R.id.progbar);
         progressBar.setVisibility(View.INVISIBLE);
 
-        imageView = (ImageView)findViewById(R.id.ViewImage);
+        imageView = findViewById(R.id.ViewImage);
 
-        Button btnCamera = (Button)findViewById(R.id.btnCamera);
-        Button btnPick_Img = (Button)findViewById(R.id.btnPickImg);
+        btnCamera = findViewById(R.id.btnCamera);
+        btnPick_Img = findViewById(R.id.btnPickImg);
 
-        send = (Button)findViewById(R.id.btnSend);
-
+        send = findViewById(R.id.btnSend);
         send.setVisibility(View.INVISIBLE);
 
 
@@ -103,8 +102,7 @@ public class MainActivity extends AppCompatActivity {
         send.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                SecondActivity.GetImageData(imageData);
-                ThirdActivity.GetImageData(imageData);
+                ;
 
                 uploadImage(imageData,null);
 

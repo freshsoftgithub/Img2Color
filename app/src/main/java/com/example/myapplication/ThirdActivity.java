@@ -2,10 +2,15 @@ package com.example.myapplication;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -25,23 +30,21 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Timer;
 
 public class ThirdActivity extends AppCompatActivity {
 
     static String pencil;
     ImageView image_pencil;
-    static Bitmap imageData;
-    ProgressBar progressBar;
-    int count;
-    Timer timer;
-    EditText emailT;
     Button Paint;
     Button back;
     Button send;
@@ -51,10 +54,6 @@ public class ThirdActivity extends AppCompatActivity {
         return pencil;
     }
 
-    public static Bitmap GetImageData(Bitmap img) {
-        imageData = img;
-        return imageData;
-    }
 
     private static Bitmap getBitmapFromURL(String src) {
         try {
@@ -79,19 +78,15 @@ public class ThirdActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_third);
 
-        emailT = (EditText)findViewById(R.id.Email);
-
-        progressBar = (ProgressBar)findViewById(R.id.progbar);
-        progressBar.setVisibility(View.INVISIBLE);
 
         image_pencil = (ImageView)findViewById(R.id.ViewImage_pencil);
 
         Bitmap bit_pencil = getBitmapFromURL(pencil);
         image_pencil.setImageBitmap(bit_pencil);
 
-        back = (Button)findViewById(R.id.btnBack);
-        Paint = (Button)findViewById(R.id.btnPaintShow);
-        send = (Button)findViewById(R.id.btnGetPictures);
+        back = findViewById(R.id.btnBack);
+        Paint = findViewById(R.id.btnPaintShow);
+        send = findViewById(R.id.btnGetPictures);
 
         Paint.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -100,7 +95,6 @@ public class ThirdActivity extends AppCompatActivity {
                 startActivity(pencil);
             }
         });
-
         back.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -111,105 +105,31 @@ public class ThirdActivity extends AppCompatActivity {
         send.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                uploadImage(imageData,emailT.getText().toString());
-
-                back.setEnabled(false);
-                Paint.setEnabled(false);
-                send.setEnabled(false);
-                emailT.setEnabled(false);
-
-                Toast message = Toast.makeText(ThirdActivity.this,"Идет отправка изображений, пожалуйста подождите.",Toast.LENGTH_LONG);
+                dowbloadImageOnDevice(bit_pencil);
+                Toast message = Toast.makeText(ThirdActivity.this,"Изображение скачено.",Toast.LENGTH_LONG);
                 message.show();
-
-                progressBar.setVisibility(View.VISIBLE);
-                timer = new Timer(){
-                    public void run(){
-                        count++;
-                        progressBar.setProgress(count);
-                    }
-                };
             }
         });
     }
 
-    public byte[] getFileDataFromDrawable(Bitmap bitmap) {
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        bitmap.compress(Bitmap.CompressFormat.PNG, 80, byteArrayOutputStream);
-        return byteArrayOutputStream.toByteArray();
+    public void dowbloadImageOnDevice(Bitmap picture){
+        OutputStream fos;
+        try{
+            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q){
+                ContentResolver resolver = getContentResolver();
+                ContentValues contentValues = new ContentValues();
+                contentValues.put(MediaStore.MediaColumns.DISPLAY_NAME,"Image" + ".jpg");
+                contentValues.put(MediaStore.MediaColumns.MIME_TYPE, "image/jpg");
+                Uri imageUri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues);
+                fos = resolver.openOutputStream(Objects.requireNonNull(imageUri));
+                picture.compress(Bitmap.CompressFormat.JPEG,100,fos);
+                Objects.requireNonNull(fos);
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
     }
 
-    private void uploadImage(final Bitmap image, String email) {
-        String url = "http://10.0.2.2:8000/upload"; //урл, куда пост-запрос отправляется
-
-        com.example.myapplication4.api.VolleyMultipartRequest volleyMultipartRequest = new com.example.myapplication4.api.VolleyMultipartRequest(Request.Method.POST, url,
-                new Response.Listener<NetworkResponse>() {
-                    @Override
-                    public void onResponse(NetworkResponse response) {
-                        try {
-                            JSONObject obj = new JSONObject(new String(response.data));
-
-                            //Ссылка paint
-                            String paint =  obj.getJSONObject("image_paint").getString("first");
-                            //Ссылка pencil
-                            String pencil = obj.getJSONObject("image_pencil").getString("first");
-
-                            //Отправка на второй экран
-                            //SecondActivity.GetURLPaint(paint);
-                            //ThirdActivity.GetURLPencil(pencil);
-
-                            timer.cancel();
-                            progressBar.setVisibility(View.INVISIBLE);
-
-                            Toast message = Toast.makeText(ThirdActivity.this,"Изображения отправлены на почту", Toast.LENGTH_SHORT);
-                            message.show();
-
-                            back.setEnabled(true);
-                            Paint.setEnabled(true);
-                            send.setEnabled(true);
-                            emailT.setEnabled(true);
-                            //Открыть второй экран
-
-
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                },
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Toast.makeText(getApplicationContext(), error.getMessage(), Toast.LENGTH_LONG).show();
-                        Log.e("GotError",""+error.getMessage());
-                    }
-                }) {
-
-
-            @Override
-            protected Map<String, DataPart> getByteData() {
-                Map<String, DataPart> params = new HashMap<>();
-                long imagename = System.currentTimeMillis();
-                params.put("file", new DataPart(imagename + ".png", getFileDataFromDrawable(image)));
-                return params;
-            }
-
-            @Override
-            protected Map<String, String> getParams() {
-                Map<String, String> params = new HashMap<>();
-
-                params.put("email", email);
-
-                return params;
-            }
-        };
-        volleyMultipartRequest.setRetryPolicy(new DefaultRetryPolicy(90000,
-                DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
-                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
-
-        //adding the request to volley
-        Volley.newRequestQueue(this).add(volleyMultipartRequest);
-
-
-    }
 
 
 }
