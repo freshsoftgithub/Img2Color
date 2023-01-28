@@ -227,7 +227,6 @@ public class MainActivity extends AppCompatActivity {
                 DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
                 DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
 
-        //adding the request to volley
         Volley.newRequestQueue(this).add(volleyMultipartRequest);
 
     }
